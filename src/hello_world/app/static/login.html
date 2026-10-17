@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 - AI 私厨</title>
+    <link rel="stylesheet" href="/static/auth.css" />
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-visual">
+        <div class="brand">
+          <div class="brand-mark">AI</div>
+          <div>
+            <div class="brand-name">AI 私厨</div>
+            <div class="brand-caption">让冰箱里的食材变成一顿好饭</div>
+          </div>
+        </div>
+
+        <div class="visual-copy">
+          <p class="visual-kicker">PRIVATE CHEF · 智能烹饪助手</p>
+          <h1>知道你有什么，也知道你适合吃什么。</h1>
+          <p>
+            识别食材、读取长期偏好、检查过敏风险，再为你生成一份真正能执行的晚餐方案。
+          </p>
+        </div>
+
+        <div class="visual-points">
+          <div class="visual-point">
+            <strong>食材识别</strong>
+            <span>拍照记录冰箱库存，优先使用临期食材。</span>
+          </div>
+          <div class="visual-point">
+            <strong>长期记忆</strong>
+            <span>记住过敏、忌口、人数和厨艺水平。</span>
+          </div>
+          <div class="visual-point">
+            <strong>安全优先</strong>
+            <span>每道菜谱单独进行过敏原检查。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-form-wrap">
+          <p class="auth-kicker">欢迎回来</p>
+          <h2>登录 AI 私厨</h2>
+          <p class="auth-subtitle">
+            继续使用你的食材库存、长期偏好和会话记录。
+          </p>
+
+          <form class="auth-form" id="login-form">
+            <label class="field">
+              <span>用户名</span>
+              <input
+                id="username"
+                name="username"
+                autocomplete="username"
+                maxlength="32"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>密码</span>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                maxlength="72"
+                required
+              />
+            </label>
+
+            <button class="auth-submit" id="submit-button" type="submit">
+              登录
+            </button>
+
+            <p class="auth-alert" id="auth-alert"></p>
+          </form>
+
+          <p class="auth-switch">
+            还没有账号？
+            <a href="/register">创建一个账号</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#login-form");
+      const usernameInput = document.querySelector("#username");
+      const passwordInput = document.querySelector("#password");
+      const submitButton = document.querySelector("#submit-button");
+      const alert = document.querySelector("#auth-alert");
+
+      async function checkSession() {
+        try {
+          const response = await fetch("/api/v1/auth/me", {
+            credentials: "same-origin",
+          });
+
+          if (response.ok) {
+            window.location.href = "/";
+          }
+        } catch {
+          // 未登录时停留在登录页
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        alert.textContent = "";
+        submitButton.disabled = true;
+        submitButton.textContent = "正在登录...";
+
+        try {
+          const response = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: usernameInput.value.trim(),
+              password: passwordInput.value,
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(data.detail || "登录失败，请检查用户名和密码。");
+          }
+
+          window.location.href = "/";
+        } catch (error) {
+          alert.textContent = error.message;
+          submitButton.disabled = false;
+          submitButton.textContent = "登录";
+        }
+      });
+
+      checkSession();
+    </script>
+  </body>
+</html>

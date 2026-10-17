@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>食材库存 - AI 私厨</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f4f6f5;
+        color: #17221c;
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .page {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 50px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .header p {
+        margin: 5px 0 0;
+        color: #66736b;
+        font-size: 13px;
+      }
+
+      .back-link {
+        color: #246247;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .panel {
+        padding: 20px;
+        border: 1px solid #dce4df;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .add-form {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 0.8fr 1.2fr auto;
+        gap: 10px;
+      }
+
+      .add-form input {
+        height: 42px;
+        min-width: 0;
+        border: 1px solid #dce4df;
+        border-radius: 8px;
+        outline: none;
+        padding: 0 11px;
+      }
+
+      .add-form input:focus {
+        border-color: #2f7d5a;
+        box-shadow: 0 0 0 3px rgba(47, 125, 90, 0.12);
+      }
+
+      .primary-button {
+        height: 42px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 16px;
+        background: #2f7d5a;
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      .status {
+        min-height: 20px;
+        margin: 12px 0 0;
+        color: #66736b;
+        font-size: 13px;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: minmax(130px, 1fr) 140px 160px 70px;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid #dce4df;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .item-name {
+        font-weight: 700;
+      }
+
+      .item-name small {
+        display: block;
+        margin-top: 4px;
+        color: #66736b;
+        font-size: 12px;
+        font-weight: 400;
+      }
+
+      .quantity-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .quantity-row input {
+        width: 78px;
+        height: 34px;
+        border: 1px solid #dce4df;
+        border-radius: 6px;
+        padding: 0 8px;
+      }
+
+      .quantity-row button,
+      .delete-button {
+        height: 34px;
+        border: 0;
+        border-radius: 6px;
+        background: #edf3ef;
+        color: #17221c;
+      }
+
+      .delete-button {
+        background: #fff1f1;
+        color: #b84444;
+      }
+
+      .expiry {
+        font-size: 13px;
+      }
+
+      .expiry.expired {
+        color: #b84444;
+        font-weight: 700;
+      }
+
+      .expiry.expiring {
+        color: #9a6a16;
+        font-weight: 700;
+      }
+
+      .expiry.fresh {
+        color: #246247;
+      }
+
+      .empty {
+        padding: 40px 10px;
+        color: #66736b;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        .add-form {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .add-form .primary-button {
+          grid-column: 1 / -1;
+        }
+
+        .item {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <div>
+          <h1>食材库存</h1>
+          <p>记录食材数量、单位和保质期。</p>
+        </div>
+        <a class="back-link" href="/">返回 AI 私厨</a>
+      </header>
+
+      <section class="panel">
+        <form class="add-form" id="add-form">
+          <input
+            id="name-input"
+            placeholder="食材名称，例如：西红柿"
+            maxlength="80"
+            required
+          />
+          <input
+            id="quantity-input"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="数量"
+            required
+          />
+          <input
+            id="unit-input"
+            placeholder="单位，例如：个"
+            maxlength="20"
+            required
+          />
+          <input id="expires-input" type="date" />
+          <button class="primary-button" type="submit">添加食材</button>
+        </form>
+
+        <p class="status" id="status"></p>
+        <div class="list" id="list"></div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#add-form");
+      const nameInput = document.querySelector("#name-input");
+      const quantityInput = document.querySelector("#quantity-input");
+      const unitInput = document.querySelector("#unit-input");
+      const expiresInput = document.querySelector("#expires-input");
+      const status = document.querySelector("#status");
+      const list = document.querySelector("#list");
+
+      async function api(url, options = {}) {
+        const response = await fetch(url, {
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+          ...options,
+        });
+
+        if (response.status === 401) {
+          window.location.href = "/";
+          throw new Error("请先登录。");
+        }
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.detail || `请求失败：${response.status}`);
+        }
+
+        return data;
+      }
+
+      function setStatus(text) {
+        status.textContent = text;
+      }
+
+      function formatExpiry(expiresAt) {
+        if (!expiresAt) {
+          return {
+            text: "未设置保质期",
+            className: "",
+          };
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const expiry = new Date(`${expiresAt}T00:00:00`);
+        const days = Math.round(
+          (expiry.getTime() - today.getTime()) / 86400000,
+        );
+
+        if (days < 0) {
+          return {
+            text: `${expiresAt}，已过期 ${Math.abs(days)} 天`,
+            className: "expired",
+          };
+        }
+
+        if (days <= 3) {
+          return {
+            text: `${expiresAt}，${days} 天后到期`,
+            className: "expiring",
+          };
+        }
+
+        return {
+          text: `${expiresAt}，还有 ${days} 天`,
+          className: "fresh",
+        };
+      }
+
+      function renderItems(items) {
+        list.replaceChildren();
+
+        if (!items.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "库存里还没有食材。";
+          list.append(empty);
+          return;
+        }
+
+        items.forEach((item) => {
+          const row = document.createElement("article");
+          row.className = "item";
+
+          const name = document.createElement("div");
+          name.className = "item-name";
+          name.textContent = item.name;
+          const idText = document.createElement("small");
+          idText.textContent = `ID: ${item.id}`;
+          name.append(idText);
+
+          const quantity = document.createElement("div");
+          quantity.className = "quantity-row";
+
+          const quantityField = document.createElement("input");
+          quantityField.type = "number";
+          quantityField.min = "0.01";
+          quantityField.step = "0.01";
+          quantityField.value = item.quantity;
+
+          const saveButton = document.createElement("button");
+          saveButton.type = "button";
+          saveButton.textContent = "保存";
+          saveButton.addEventListener("click", async () => {
+            try {
+              await api(`/api/v1/pantry/${item.id}`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                  quantity: Number(quantityField.value),
+                }),
+              });
+              setStatus(`已更新 ${item.name} 的数量。`);
+              await loadItems();
+            } catch (error) {
+              setStatus(error.message);
+            }
+          });
+
+          quantity.append(quantityField, saveButton);
+
+          const expiryInfo = formatExpiry(item.expires_at);
+          const expiry = document.createElement("div");
+          expiry.className = `expiry ${expiryInfo.className}`;
+          expiry.textContent = expiryInfo.text;
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "delete-button";
+          removeButton.textContent = "删除";
+          removeButton.addEventListener("click", async () => {
+            if (!window.confirm(`确定删除 ${item.name} 吗？`)) {
+              return;
+            }
+
+            try {
+              await api(`/api/v1/pantry/${item.id}`, {
+                method: "DELETE",
+              });
+              setStatus(`已删除 ${item.name}。`);
+              await loadItems();
+            } catch (error) {
+              setStatus(error.message);
+            }
+          });
+
+          const unit = document.createElement("small");
+          unit.textContent = `${item.quantity} ${item.unit}`;
+          name.append(unit);
+
+          row.append(name, quantity, expiry, removeButton);
+          list.append(row);
+        });
+      }
+
+      async function loadItems() {
+        try {
+          const data = await api("/api/v1/pantry");
+          renderItems(data.items || []);
+        } catch (error) {
+          setStatus(`加载库存失败：${error.message}`);
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+          await api("/api/v1/pantry", {
+            method: "POST",
+            body: JSON.stringify({
+              name: nameInput.value.trim(),
+              quantity: Number(quantityInput.value),
+              unit: unitInput.value.trim(),
+              expires_at: expiresInput.value || null,
+            }),
+          });
+
+          form.reset();
+          setStatus("食材已添加。");
+          await loadItems();
+        } catch (error) {
+          setStatus(error.message);
+        }
+      });
+
+      loadItems();
+    </script>
+  </body>
+</html>

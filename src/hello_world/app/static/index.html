@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 私厨</title>
+    <link rel="stylesheet" href="/static/app.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="boot-screen" id="boot-screen">
+      <div class="boot-mark">AI</div>
+      <div class="boot-spinner"></div>
+      <p>正在打开你的私人厨房...</p>
+    </div>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <div class="app-shell" id="app-shell" hidden>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+              <strong>AI 私厨</strong>
+              <span>你的私人烹饪工作台</span>
+            </div>
+          </div>
+
+          <button class="new-chat-button" id="new-chat-button" type="button">
+            <i data-lucide="plus"></i>
+            <span>新建对话</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-heading">
+            <span>最近会话</span>
+            <span class="session-count" id="session-count">0</span>
+          </div>
+          <div class="session-list" id="session-list"></div>
+        </div>
+
+        <div class="sidebar-bottom">
+          <a class="sidebar-link" href="/static/pantry.html">
+            <i data-lucide="refrigerator"></i>
+            <span>食材库存</span>
+          </a>
+
+          <div class="user-card">
+            <div class="user-avatar" id="user-avatar">U</div>
+            <div class="user-info">
+              <strong id="username-label">当前用户</strong>
+              <span>已登录</span>
+            </div>
+          </div>
+
+          <button class="sidebar-link danger" id="logout-button" type="button">
+            <i data-lucide="log-out"></i>
+            <span>退出登录</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="chat-main">
+        <header class="chat-topbar">
+          <div class="topbar-left">
+            <button class="menu-button" id="menu-button" type="button" aria-label="打开侧边栏">
+              <i data-lucide="menu"></i>
+            </button>
+            <div class="topbar-title">
+              <h1>AI 私厨</h1>
+              <p id="chat-status">准备开始今天的一餐</p>
+            </div>
+          </div>
+
+          <div class="topbar-actions">
+            <span class="model-chip">qwen3.8-flash</span>
+            <button class="icon-action" id="clear-chat-button" type="button" aria-label="清空当前对话">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
+        </header>
+
+        <section class="messages" id="messages" aria-live="polite"></section>
+
+        <footer class="composer-wrap">
+          <div class="composer">
+            <div class="image-preview" id="image-preview" hidden>
+              <img id="preview-image" alt="待发送食材图片" />
+              <div>
+                <strong id="preview-name"></strong>
+                <span>已上传到 OSS</span>
+              </div>
+              <button class="preview-remove" id="remove-image-button" type="button">
+                移除
+              </button>
+            </div>
+
+            <div class="composer-box">
+              <button class="attach-button" id="upload-button" type="button" aria-label="上传食材图片">
+                <i data-lucide="image-plus"></i>
+              </button>
+
+              <textarea
+                id="message-input"
+                rows="1"
+                maxlength="4000"
+                placeholder="描述现有食材，或者上传一张冰箱照片..."
+              ></textarea>
+
+              <button class="send-button" id="send-button" type="button">
+                <span>发送</span>
+                <i data-lucide="arrow-up"></i>
+              </button>
+            </div>
+
+            <p class="composer-hint">Enter 发送 · Shift + Enter 换行</p>
+            <input id="file-input" type="file" accept="image/*" hidden />
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
